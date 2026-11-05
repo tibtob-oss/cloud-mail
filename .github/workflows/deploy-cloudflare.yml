@@ -64,6 +64,9 @@ jobs:
           
           echo "🔐 Starting environment setup..."
           
+          # 由jq生成合法JSON数组，解决转义报错
+          DOMAIN=$(jq -n --arg d "$DOMAIN" '[$d]')
+          
           if [ -z "$JWT_SECRET" ] || grep -q '[?%#/\\]' <<< "$JWT_SECRET"; then
             echo "❌ JWT_SECRET variable is empty or contains invalid characters (?, %, #, /, \\)."
             exit 1
@@ -109,12 +112,10 @@ jobs:
           
           if [ -n "$EMAIL" ]; then
             cat >> "$CONFIG_FILE" <<'EOF'
-
           [[send_email]]
           name = "email"
           EOF
           fi
-
           sed -i "s|\${NAME}|${NAME}|g" "$CONFIG_FILE"
           sed -i "s|\${CUSTOM_DOMAIN}|${CUSTOM_DOMAIN}|g" "$CONFIG_FILE"
           sed -i "s|\"\${DOMAIN}\"|${DOMAIN}|g" "$CONFIG_FILE"
@@ -129,6 +130,7 @@ jobs:
           sed -i "s|\${LINUXDO_CALLBACK_URL}|${LINUXDO_CALLBACK_URL}|g" "$CONFIG_FILE"
           
           echo "✅ Environment setup completed."
+
 
       - name: ⚡ 设置KV数据库 / Set up KV database
         working-directory: ./mail-worker
